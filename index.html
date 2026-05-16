@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#00838f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Docente">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Docente</title>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#eef7f6;
+  --card:#ffffff;
+  --text:#12332f;
+  --muted:#60736f;
+  --accent:#00838f;
+  --accent-2:#00796b;
+  --border:#cfdedb;
+  --danger:#c62828;
+  --warning:#ef6c00;
+  --ok:#2e7d32;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+body.dark{
+  --bg:#111817;
+  --card:#1b2523;
+  --text:#f4fffd;
+  --muted:#b4c8c4;
+  --accent:#4db6ac;
+  --accent-2:#80cbc4;
+  --border:#344542;
+}
+
+header{
+  background:var(--accent);
+  color:white;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.copyrightBar{
+  background:rgba(0,0,0,.08);
+  color:var(--muted);
+  text-align:center;
+  padding:10px;
+  font-size:12px;
+}
+
+h2,h3{
+  margin-top:0;
+}
+
+.container{
+  padding:15px;
+  max-width:1200px;
+  margin:auto;
+}
+
+.card{
+  background:var(--card);
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:12px;
+  box-shadow:0 2px 5px rgba(0,0,0,.08);
+  border:1px solid var(--border);
+}
+
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+}
+
+button{
+  background:var(--accent);
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+  margin:2px;
+}
+
+button:hover{
+  filter:brightness(.95);
+}
+
+button.secundario{
+  background:var(--accent-2);
+}
+
+button.peligro{
+  background:var(--danger);
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+label{
+  display:block;
+  font-weight:bold;
+  margin-top:8px;
+}
+
+input,textarea,select{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  margin-bottom:8px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  box-sizing:border-box;
+  background:var(--card);
+  color:var(--text);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  border:1px solid var(--border);
+  padding:8px;
+  text-align:center;
+  vertical-align:middle;
+}
+
+th{
+  background:var(--accent);
+  color:white;
+}
+
+pre{
+  white-space:pre-wrap;
+  background:rgba(0,0,0,.05);
+  padding:10px;
+  border-radius:8px;
+}
+
+.hidden{
+  display:none;
+}
+
+.chips{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.chip{
+  border:none;
+  border-radius:20px;
+  padding:5px 10px;
+  cursor:pointer;
+  color:#10201d;
+}
+
+.presente{background:#c8e6c9;}
+.falta{background:#ffcdd2;}
+.retardo{background:#ffe0b2;}
+.justificado{background:#bbdefb;}
+
+.activo{
+  outline:2px solid var(--text);
+  transform:scale(1.08);
+}
+
+.logoPreview{
+  width:120px;
+  max-height:120px;
+  object-fit:contain;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+}
+
+.mensaje{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  background:var(--text);
+  color:var(--card);
+  padding:10px 14px;
+  border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
+  max-width:320px;
+  z-index:10;
+}
+
+.muted{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.resumen{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:8px;
+}
+
+.dato{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px;
+  text-align:center;
+}
+
+.dato strong{
+  display:block;
+  font-size:24px;
+}
+
+.campoChico{
+  max-width:90px;
+  margin:auto;
+}
+
+.filaActividad{
+  display:grid;
+  grid-template-columns:1fr 110px;
+  gap:10px;
+  align-items:center;
+  border:1px solid var(--border);
+  padding:8px;
+  margin-bottom:5px;
+  border-radius:8px;
+}
+
+.pill{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(0,131,143,.12);
+  color:var(--text);
+  font-size:12px;
+  margin-left:6px;
+}
+
+@media(max-width:700px){
+  table{
+    font-size:14px;
+  }
+
+  th,td{
+    padding:6px;
+  }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h2>Docente</h2>
+  <div class="toolbar">
+    <button onclick="cambiarTab('alumnos')">Alumnos</button>
+    <button onclick="cambiarTab('asistencia')">Asistencia</button>
+    <button onclick="cambiarTab('actividades')">Actividades</button>
+    <button onclick="cambiarTab('conducta')">Conducta</button>
+    <button onclick="cambiarTab('reportes')">Reportes</button>
+    <button onclick="cambiarTab('configuracion')">Configuración</button>
+    <button onclick="alternarTema()" title="Cambiar tema">Tema</button>
+  </div>
+</header>
+
+<div class="container">
+  <div id="alumnos">
+    <div class="card">
+      <h3>Registrar alumnos</h3>
+      <div class="grid">
+        <div>
+          <label>Grado</label>
+          <select id="grado">
+            <option>1°</option>
+            <option>2°</option>
+            <option>3°</option>
+          </select>
+        </div>
+        <div>
+          <label>Grupo</label>
+          <select id="grupo">
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+            <option>E</option>
+            <option>F</option>
+            <option>G</option>
+            <option>H</option>
+          </select>
+        </div>
+        <div>
+          <label>Turno</label>
+          <select id="turno">
+            <option>Matutino</option>
+            <option>Vespertino</option>
+          </select>
+        </div>
+      </div>
+      <label>Lista de alumnos</label>
+      <textarea id="listaAlumnos" rows="6" placeholder="Un alumno por línea"></textarea>
+      <button onclick="agregarAlumnos()">Agregar alumnos</button>
+    </div>
+
+    <div class="card">
+      <h3>Alumnos registrados</h3>
+      <div class="grid">
+        <div>
+          <label>Filtrar por grupo</label>
+          <select id="filtroGrupoAlumnos" onchange="mostrarAlumnos()"></select>
+        </div>
+        <div>
+          <label>Buscar</label>
+          <input id="buscarAlumno" placeholder="Nombre del alumno" oninput="mostrarAlumnos()">
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Grupo</th>
+            <th>Teléfono</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaAlumnos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="asistencia" class="hidden">
+    <div class="card">
+      <h3>Asistencia</h3>
+      <div class="grid">
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="fechaAsistencia" onchange="cargarAsistencia()">
+        </div>
+        <div>
+          <label>Grupo</label>
+          <select id="grupoAsistencia" onchange="cargarAsistencia()"></select>
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodoAsistencia" onchange="cargarAsistencia()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Resumen del día</h3>
+      <div id="resumenAsistencia" class="resumen"></div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Alumno</th>
+            <th>Estado</th>
+            <th>Observación</th>
+            <th>Participación</th>
+            <th>WhatsApp</th>
+          </tr>
+        </thead>
+        <tbody id="tablaAsistencia"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="actividades" class="hidden">
+    <div class="card">
+      <h3>Registrar actividad o examen</h3>
+      <div class="grid">
+        <div>
+          <label>Grupo</label>
+          <select id="grupoActividad"></select>
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodoActividad"></select>
+        </div>
+        <div>
+          <label>Tipo</label>
+          <select id="tipoActividad" onchange="actualizarTextoActividad()">
+            <option value="actividad">Actividad</option>
+            <option value="examen">Examen</option>
+          </select>
+        </div>
+        <div>
+          <label>Nombre</label>
+          <input type="text" id="nombreActividad" placeholder="Ej. Tarea 1">
+        </div>
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="fechaActividad">
+        </div>
+        <div>
+          <label id="labelPuntajeMaximo">Puntaje máximo de la actividad</label>
+          <input type="number" id="puntajeMaximoActividad" min="1" step="0.1" value="10">
+        </div>
+      </div>
+      <p id="instruccionActividad" class="muted">Primero escribe cuánto vale la actividad. Después carga alumnos y captura cuánto obtuvo cada uno.</p>
+      <button onclick="mostrarActividad()">Cargar alumnos</button>
+    </div>
+
+    <div class="card">
+      <p id="ayudaActividad" class="muted">Calificación obtenida por alumno. Las actividades completas suman hasta 2 puntos de la calificación final.</p>
+      <div id="listaActividad"></div>
+      <button onclick="guardarActividad()">Guardar registro</button>
+      <button id="btnCancelarEdicionActividad" class="secundario hidden" onclick="cancelarEdicionActividad()">Cancelar edición</button>
+    </div>
+
+    <div class="card">
+      <h3>Historial de actividades y exámenes</h3>
+      <div id="historialActividades"></div>
+    </div>
+  </div>
+
+  <div id="conducta" class="hidden">
+    <div class="card">
+      <h3>Conducta</h3>
+      <div class="grid">
+        <div>
+          <label>Grupo</label>
+          <select id="grupoConducta"></select>
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodoConducta"></select>
+        </div>
+      </div>
+      <button onclick="cargarConducta()">Cargar grupo</button>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Conducta</th>
+            <th>Observación</th>
+            <th>Guardar</th>
+          </tr>
+        </thead>
+        <tbody id="tablaConducta"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="reportes" class="hidden">
+    <div class="card">
+      <h3>Reportes</h3>
+      <div class="grid">
+        <div>
+          <label>Alumno</label>
+          <select id="alumnoReporte"></select>
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodoReporte"></select>
+        </div>
+      </div>
+      <button onclick="generarReporte()">Generar reporte</button>
+      <pre id="resultadoReporte"></pre>
+      <button onclick="exportarCSV()">Exportar CSV</button>
+      <button onclick="generarPDF()">Exportar PDF</button>
+    </div>
+    <div class="card">
+      <h3>Resumen grupal</h3>
+      <div class="grid">
+        <div>
+          <label>Grupo</label>
+          <select id="grupoResumen"></select>
+        </div>
+        <div>
+          <label>Periodo</label>
+          <select id="periodoResumen"></select>
+        </div>
+      </div>
+      <button onclick="generarResumenGrupal()">Ver resumen</button>
+      <div id="tablaResumenGrupal"></div>
+    </div>
+  </div>
+
+  <div id="configuracion" class="hidden">
+    <div class="card">
+      <h3>Configuración escolar</h3>
+      <label>Logo escuela</label>
+      <input type="file" id="logoInput" accept="image/*" onchange="guardarLogo(event)">
+      <img id="previewLogo" class="logoPreview" alt="Logo de la escuela">
+
+      <div class="grid">
+        <div>
+          <label>Nombre escuela</label>
+          <input type="text" id="nombreEscuela">
+        </div>
+        <div>
+          <label>CCT</label>
+          <input type="text" id="cctEscuela">
+        </div>
+        <div>
+          <label>Docente</label>
+          <input type="text" id="docenteNombre">
+        </div>
+        <div>
+          <label>Disciplina</label>
+          <input type="text" id="disciplinaNombre">
+        </div>
+        <div>
+          <label>Ciclo escolar</label>
+          <input type="text" id="cicloEscolar" placeholder="2025-2026">
+        </div>
+      </div>
+      <button onclick="guardarConfiguracion()">Guardar configuración</button>
+    </div>
+
+    <div class="card">
+      <h3>Ponderación de evaluación</h3>
+      <div class="grid">
+        <div>
+          <label>Actividades</label>
+          <input type="number" id="pesoActividades" min="0" step="0.1" value="2">
+        </div>
+        <div>
+          <label>Exámenes</label>
+          <input type="number" id="pesoExamenes" min="0" step="0.1" value="2">
+        </div>
+        <div>
+          <label>Conducta</label>
+          <input type="number" id="pesoConducta" min="0" step="0.1" value="0.5">
+        </div>
+        <div>
+          <label>Participación</label>
+          <input type="number" id="pesoParticipacion" min="0" step="0.1" value="0.5">
+        </div>
+      </div>
+      <p class="muted">La suma actual se usa como base de calificación. Si dejas 2 + 2 + 0.5 + 0.5, la base será 5.</p>
+      <button onclick="guardarConfiguracion()">Guardar ponderación</button>
+    </div>
+
+    <div class="card">
+      <h3>Respaldo de información</h3>
+      <p class="muted">Exporta un respaldo para conservar tus datos o moverlos a otro equipo.</p>
+      <button onclick="exportarRespaldo()">Exportar respaldo</button>
+      <label>Importar respaldo</label>
+      <input type="file" accept="application/json" onchange="importarRespaldo(event)">
+      <button class="peligro" onclick="borrarTodo()">Borrar todos los datos</button>
+    </div>
+  </div>
+</div>
+
+<div id="mensaje" class="mensaje hidden"></div>
+
+<footer class="copyrightBar">
+  Docente. Aplicación de autoría privada. Prohibida su reproducción, distribución, venta o modificación sin autorización expresa de su autora.
+</footer>
+
+<script>
+const KEYS = {
+  alumnos:"alumnosPRO",
+  asistencias:"asistenciasPRO",
+  actividades:"actividadesPRO",
+  conducta:"conductaPRO",
+  configuracion:"configPRO",
+  tema:"temaPRO"
+};
+
+let alumnos = leerStorage(KEYS.alumnos, []);
+let asistencias = leerStorage(KEYS.asistencias, {});
+let actividades = leerStorage(KEYS.actividades, []);
+let conducta = leerStorage(KEYS.conducta, {});
+let configuracion = leerStorage(KEYS.configuracion, {});
+let actividadEditandoId = null;
+
+const PERIODOS = ["Periodo 1","Periodo 2","Periodo 3"];
+
+function leerStorage(key, fallback){
+  try{
+    return JSON.parse(localStorage.getItem(key)) || fallback;
+  }catch(error){
+    return fallback;
+  }
+}
+
+function guardarStorage(){
+  localStorage.setItem(KEYS.alumnos, JSON.stringify(alumnos));
+  localStorage.setItem(KEYS.asistencias, JSON.stringify(asistencias));
+  localStorage.setItem(KEYS.actividades, JSON.stringify(actividades));
+  localStorage.setItem(KEYS.conducta, JSON.stringify(conducta));
+  localStorage.setItem(KEYS.configuracion, JSON.stringify(configuracion));
+}
+
+function uid(){
+  if(window.crypto && crypto.randomUUID){
+    return crypto.randomUUID();
+  }
+  return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+}
+
+function mostrarMensaje(texto){
+  const box = document.getElementById("mensaje");
+  box.textContent = texto;
+  box.classList.remove("hidden");
+  clearTimeout(window.__mensajeTimer);
+  window.__mensajeTimer = setTimeout(()=>box.classList.add("hidden"), 2600);
+}
+
+function crearTexto(tag, texto, className){
+  const el = document.createElement(tag);
+  el.textContent = texto;
+  if(className) el.className = className;
+  return el;
+}
+
+function alumnosConId(){
+  let cambio = false;
+  alumnos.forEach(a=>{
+    if(!a.id){
+      a.id = uid();
+      cambio = true;
+    }
+  });
+  actividades.forEach(a=>{
+    if(!a.id){
+      a.id = uid();
+      cambio = true;
+    }
+  });
+  if(cambio) guardarStorage();
+}
+
+function alumnoPorId(id){
+  return alumnos.find(a=>a.id===id);
+}
+
+function gruposUnicos(){
+  return [...new Set(alumnos.map(a=>a.grupo))].sort();
+}
+
+function llenarSelectPeriodos(selectId, incluirTodos){
+  const select = document.getElementById(selectId);
+  if(!select) return;
+  const valorPrevio = select.value;
+  select.innerHTML = "";
+
+  if(incluirTodos){
+    const optTodos = document.createElement("option");
+    optTodos.value = "";
+    optTodos.textContent = "Todos los periodos";
+    select.appendChild(optTodos);
+  }
+
+  PERIODOS.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+
+  if([...select.options].some(opt=>opt.value===valorPrevio)){
+    select.value = valorPrevio;
+  }
+}
+
+function periodoSeleccionado(selectId){
+  const select = document.getElementById(selectId);
+  return select ? select.value : "";
+}
+
+function getPonderaciones(){
+  const pesos = configuracion.ponderaciones || {};
+  const actividadesPeso = Number(pesos.actividades ?? 2);
+  const examenesPeso = Number(pesos.examenes ?? 2);
+  const conductaPeso = Number(pesos.conducta ?? 0.5);
+  const participacionPeso = Number(pesos.participacion ?? 0.5);
+
+  return {
+    actividades:actividadesPeso,
+    examenes:examenesPeso,
+    conducta:conductaPeso,
+    participacion:participacionPeso,
+    total:actividadesPeso + examenesPeso + conductaPeso + participacionPeso
+  };
+}
+
+function coincidePeriodo(valor, periodo){
+  return !periodo || (valor || "Sin periodo") === periodo;
+}
+
+function llenarSelectGrupos(selectId, incluirTodos){
+  const select = document.getElementById(selectId);
+  select.innerHTML = "";
+
+  if(incluirTodos){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Todos";
+    select.appendChild(opt);
+  }
+
+  gruposUnicos().forEach(g=>{
+    const opt = document.createElement("option");
+    opt.value = g;
+    opt.textContent = g;
+    select.appendChild(opt);
+  });
+}
+
+function llenarSelectAlumnos(selectId){
+  const select = document.getElementById(selectId);
+  select.innerHTML = "";
+  alumnos
+    .slice()
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre, "es"))
+    .forEach(a=>{
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = `${a.nombre} - ${a.grupo}`;
+      select.appendChild(opt);
+    });
+}
+
+function cambiarTab(tab){
+  ["alumnos","asistencia","actividades","conducta","reportes","configuracion"].forEach(id=>{
+    document.getElementById(id).classList.add("hidden");
+  });
+
+  document.getElementById(tab).classList.remove("hidden");
+
+  if(tab==="alumnos"){
+    actualizarFiltrosAlumnos();
+    mostrarAlumnos();
+  }
+  if(tab==="asistencia"){
+    llenarSelectGrupos("grupoAsistencia", false);
+    llenarSelectPeriodos("periodoAsistencia", false);
+    cargarAsistencia();
+  }
+  if(tab==="actividades"){
+    llenarSelectGrupos("grupoActividad", false);
+    llenarSelectPeriodos("periodoActividad", false);
+    actualizarTextoActividad();
+    verHistorial();
+  }
+  if(tab==="conducta"){
+    llenarSelectGrupos("grupoConducta", false);
+    llenarSelectPeriodos("periodoConducta", false);
+  }
+  if(tab==="reportes"){
+    llenarSelectAlumnos("alumnoReporte");
+    llenarSelectGrupos("grupoResumen", false);
+    llenarSelectPeriodos("periodoReporte", true);
+    llenarSelectPeriodos("periodoResumen", true);
+  }
+}
+
+function alternarTema(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem(KEYS.tema, document.body.classList.contains("dark") ? "dark" : "light");
+}
+
+function aplicarTema(){
+  if(localStorage.getItem(KEYS.tema)==="dark"){
+    document.body.classList.add("dark");
+  }
+}
+
+function agregarAlumnos(){
+  const grado = document.getElementById("grado").value;
+  const grupo = document.getElementById("grupo").value;
+  const turno = document.getElementById("turno").value;
+  const grupoCompleto = `${grado}${grupo} ${turno}`;
+  const lista = document.getElementById("listaAlumnos").value.split("\n");
+
+  let agregados = 0;
+
+  lista.forEach(n=>{
+    const nombre = n.trim().replace(/\s+/g, " ");
+    if(!nombre) return;
+
+    const existe = alumnos.some(a=>
+      a.nombre.toLowerCase()===nombre.toLowerCase() &&
+      a.grupo===grupoCompleto
+    );
+
+    if(!existe){
+      alumnos.push({id:uid(), nombre, grupo:grupoCompleto, telefono:""});
+      agregados++;
+    }
+  });
+
+  guardarStorage();
+  document.getElementById("listaAlumnos").value = "";
+  actualizarFiltrosAlumnos();
+  mostrarAlumnos();
+  mostrarMensaje(agregados ? `${agregados} alumno(s) agregado(s)` : "No se agregaron alumnos nuevos");
+}
+
+function actualizarFiltrosAlumnos(){
+  llenarSelectGrupos("filtroGrupoAlumnos", true);
+}
+
+function mostrarAlumnos(){
+  const tabla = document.getElementById("tablaAlumnos");
+  const filtroGrupo = document.getElementById("filtroGrupoAlumnos").value;
+  const busqueda = document.getElementById("buscarAlumno").value.trim().toLowerCase();
+  tabla.innerHTML = "";
+
+  const lista = alumnos.filter(a=>{
+    const coincideGrupo = !filtroGrupo || a.grupo===filtroGrupo;
+    const coincideBusqueda = !busqueda || a.nombre.toLowerCase().includes(busqueda);
+    return coincideGrupo && coincideBusqueda;
+  });
+
+  lista.forEach((a,index)=>{
+    const tr = document.createElement("tr");
+    tr.appendChild(crearTexto("td", index + 1));
+    tr.appendChild(crearTexto("td", a.nombre));
+    tr.appendChild(crearTexto("td", a.grupo));
+
+    const tdTel = document.createElement("td");
+    const tel = document.createElement("input");
+    tel.type = "text";
+    tel.value = a.telefono || "";
+    tel.placeholder = "Teléfono tutor";
+    tel.onchange = ()=>guardarTelefono(a.id, tel.value);
+    tdTel.appendChild(tel);
+    tr.appendChild(tdTel);
+
+    const tdAcciones = document.createElement("td");
+    const editar = document.createElement("button");
+    editar.textContent = "Editar";
+    editar.className = "secundario";
+    editar.onclick = ()=>editarAlumno(a.id);
+
+    const eliminar = document.createElement("button");
+    eliminar.textContent = "Eliminar";
+    eliminar.className = "peligro";
+    eliminar.onclick = ()=>eliminarAlumno(a.id);
+
+    tdAcciones.appendChild(editar);
+    tdAcciones.appendChild(eliminar);
+    tr.appendChild(tdAcciones);
+    tabla.appendChild(tr);
+  });
+}
+
+function guardarTelefono(id, telefono){
+  const alumno = alumnoPorId(id);
+  if(!alumno) return;
+  alumno.telefono = telefono.trim();
+  guardarStorage();
+  mostrarMensaje("Teléfono guardado");
+}
+
+function editarAlumno(id){
+  const alumno = alumnoPorId(id);
+  if(!alumno) return;
+
+  const nuevoNombre = prompt("Nombre del alumno:", alumno.nombre);
+  if(nuevoNombre===null) return;
+
+  const nombreLimpio = nuevoNombre.trim().replace(/\s+/g, " ");
+  if(!nombreLimpio){
+    mostrarMensaje("El nombre no puede quedar vacío");
+    return;
+  }
+
+  alumno.nombre = nombreLimpio;
+  guardarStorage();
+  mostrarAlumnos();
+  mostrarMensaje("Alumno actualizado");
+}
+
+function eliminarAlumno(id){
+  const alumno = alumnoPorId(id);
+  if(!alumno) return;
+  if(!confirm(`¿Eliminar a ${alumno.nombre}? También se eliminarán sus asistencias y conducta.`)) return;
+
+  alumnos = alumnos.filter(a=>a.id!==id);
+  delete asistencias[id];
+  delete conducta[id];
+  actividades.forEach(act=>{
+    if(Array.isArray(act.cumplieron)){
+      act.cumplieron = act.cumplieron.filter(alumnoId=>alumnoId!==id);
+    }
+    if(act.calificaciones){
+      delete act.calificaciones[id];
+    }
+  });
+
+  guardarStorage();
+  actualizarFiltrosAlumnos();
+  mostrarAlumnos();
+  mostrarMensaje("Alumno eliminado");
+}
+
+function cargarAsistencia(){
+  const grupo = document.getElementById("grupoAsistencia").value;
+  const fecha = document.getElementById("fechaAsistencia").value;
+  const tabla = document.getElementById("tablaAsistencia");
+  tabla.innerHTML = "";
+
+  if(!grupo){
+    actualizarResumenAsistencia([]);
+    return;
+  }
+
+  const lista = alumnos.filter(a=>a.grupo===grupo);
+
+  lista.forEach((a,index)=>{
+    const data = (asistencias[a.id] && asistencias[a.id][fecha]) || {};
+    const estado = data.estado || "";
+    const tr = document.createElement("tr");
+
+    tr.appendChild(crearTexto("td", index + 1));
+    tr.appendChild(crearTexto("td", a.nombre));
+
+    const tdEstado = document.createElement("td");
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    [
+      ["P","presente"],
+      ["F","falta"],
+      ["R","retardo"],
+      ["J","justificado"]
+    ].forEach(([valor, clase])=>{
+      const btn = document.createElement("button");
+      btn.textContent = valor;
+      btn.className = `chip ${clase} ${estado===valor ? "activo" : ""}`;
+      btn.onclick = ()=>setEstado(a.id, valor);
+      chips.appendChild(btn);
+    });
+    tdEstado.appendChild(chips);
+    tr.appendChild(tdEstado);
+
+    const tdObs = document.createElement("td");
+    const obs = document.createElement("input");
+    obs.value = data.obs || "";
+    obs.placeholder = "Observación";
+    obs.onchange = ()=>guardarObs(a.id, obs.value);
+    tdObs.appendChild(obs);
+    tr.appendChild(tdObs);
+
+    const tdParticipacion = document.createElement("td");
+    const participacion = document.createElement("input");
+    participacion.type = "checkbox";
+    participacion.style.width = "auto";
+    participacion.checked = !!data.participacion && estado !== "F";
+    participacion.disabled = estado === "F";
+    participacion.title = estado === "F" ? "Si falta no puede tener participación" : "Cuenta para participación";
+    participacion.onchange = ()=>guardarParticipacion(a.id, participacion.checked);
+    tdParticipacion.appendChild(participacion);
+    tr.appendChild(tdParticipacion);
+
+    const tdWhats = document.createElement("td");
+    const whats = document.createElement("button");
+    whats.textContent = "Enviar";
+    whats.onclick = ()=>mensajePadres(a.id);
+    tdWhats.appendChild(whats);
+    tr.appendChild(tdWhats);
+
+    tabla.appendChild(tr);
+  });
+
+  actualizarResumenAsistencia(lista);
+}
+
+function validarFechaAsistencia(){
+  const fecha = document.getElementById("fechaAsistencia").value;
+  if(!fecha){
+    mostrarMensaje("Selecciona una fecha");
+    return "";
+  }
+  return fecha;
+}
+
+function setEstado(id, estado){
+  const fecha = validarFechaAsistencia();
+  if(!fecha) return;
+  const periodo = periodoSeleccionado("periodoAsistencia");
+
+  if(!asistencias[id]) asistencias[id] = {};
+  if(!asistencias[id][fecha]) asistencias[id][fecha] = {};
+  asistencias[id][fecha].estado = estado;
+  asistencias[id][fecha].periodo = periodo;
+  if(estado==="F"){
+    asistencias[id][fecha].participacion = false;
+  }
+
+  guardarStorage();
+  cargarAsistencia();
+}
+
+function guardarObs(id, obs){
+  const fecha = validarFechaAsistencia();
+  if(!fecha) return;
+  const periodo = periodoSeleccionado("periodoAsistencia");
+
+  if(!asistencias[id]) asistencias[id] = {};
+  if(!asistencias[id][fecha]) asistencias[id][fecha] = {};
+  asistencias[id][fecha].obs = obs.trim();
+  asistencias[id][fecha].periodo = periodo;
+
+  guardarStorage();
+  mostrarMensaje("Observación guardada");
+}
+
+function guardarParticipacion(id, participa){
+  const fecha = validarFechaAsistencia();
+  if(!fecha) return;
+  const periodo = periodoSeleccionado("periodoAsistencia");
+
+  if(!asistencias[id]) asistencias[id] = {};
+  if(!asistencias[id][fecha]) asistencias[id][fecha] = {};
+
+  if(asistencias[id][fecha].estado==="F" && participa){
+    mostrarMensaje("Si tiene falta no puede tener participación");
+    cargarAsistencia();
+    return;
+  }
+
+  asistencias[id][fecha].participacion = participa;
+  asistencias[id][fecha].periodo = periodo;
+  guardarStorage();
+  mostrarMensaje("Participación guardada");
+}
+
+function actualizarResumenAsistencia(lista){
+  const fecha = document.getElementById("fechaAsistencia").value;
+  const resumen = {P:0,F:0,R:0,J:0,Sin:0};
+
+  lista.forEach(a=>{
+    const estado = asistencias[a.id]?.[fecha]?.estado;
+    if(estado && resumen[estado]!==undefined) resumen[estado]++;
+    else resumen.Sin++;
+  });
+
+  const cont = document.getElementById("resumenAsistencia");
+  cont.innerHTML = "";
+  [
+    ["Presentes", resumen.P],
+    ["Faltas", resumen.F],
+    ["Retardos", resumen.R],
+    ["Justificados", resumen.J],
+    ["Sin registro", resumen.Sin]
+  ].forEach(([label, valor])=>{
+    const div = document.createElement("div");
+    div.className = "dato";
+    const strong = crearTexto("strong", valor);
+    const span = crearTexto("span", label);
+    div.appendChild(strong);
+    div.appendChild(span);
+    cont.appendChild(div);
+  });
+}
+
+function mostrarActividad(calificacionesActuales = {}){
+  const grupo = document.getElementById("grupoActividad").value;
+  const puntajeMaximo = Number(document.getElementById("puntajeMaximoActividad").value);
+  const cont = document.getElementById("listaActividad");
+  cont.innerHTML = "";
+
+  if(!puntajeMaximo || puntajeMaximo <= 0){
+    mostrarMensaje("El puntaje máximo debe ser mayor a cero");
+    return;
+  }
+
+  const lista = alumnos.filter(a=>a.grupo===grupo);
+  if(!lista.length){
+    cont.appendChild(crearTexto("p", "No hay alumnos en este grupo.", "muted"));
+    return;
+  }
+
+  lista.forEach(a=>{
+    const div = document.createElement("div");
+    div.className = "filaActividad";
+
+    const nombre = crearTexto("span", a.nombre);
+    const calificacion = document.createElement("input");
+    calificacion.type = "number";
+    calificacion.min = "0";
+    calificacion.max = String(puntajeMaximo);
+    calificacion.step = "0.1";
+    calificacion.value = calificacionesActuales[a.id] !== undefined
+      ? String(calificacionesActuales[a.id])
+      : String(puntajeMaximo);
+    calificacion.dataset.alumnoId = a.id;
+    calificacion.className = "campoChico";
+    calificacion.placeholder = "Obtuvo";
+    calificacion.title = `Calificación obtenida de 0 a ${puntajeMaximo}`;
+
+    div.appendChild(nombre);
+    div.appendChild(calificacion);
+    cont.appendChild(div);
+  });
+}
+
+function guardarActividad(){
+  const nombre = document.getElementById("nombreActividad").value.trim();
+  const fecha = document.getElementById("fechaActividad").value;
+  const grupo = document.getElementById("grupoActividad").value;
+  const tipo = document.getElementById("tipoActividad").value;
+  const periodo = periodoSeleccionado("periodoActividad");
+  const puntajeMaximo = Number(document.getElementById("puntajeMaximoActividad").value);
+  const campos = document.querySelectorAll('#listaActividad input[type="number"]');
+
+  if(!nombre){
+    mostrarMensaje("Escribe el nombre del registro");
+    return;
+  }
+  if(!fecha){
+    mostrarMensaje("Selecciona la fecha");
+    return;
+  }
+  if(!grupo){
+    mostrarMensaje("Selecciona un grupo");
+    return;
+  }
+  if(!puntajeMaximo || puntajeMaximo <= 0){
+    mostrarMensaje("El puntaje máximo debe ser mayor a cero");
+    return;
+  }
+  if(!campos.length){
+    mostrarMensaje("Carga alumnos antes de guardar");
+    return;
+  }
+
+  const calificaciones = {};
+  let hayError = false;
+
+  campos.forEach(c=>{
+    const valor = Number(c.value);
+    if(Number.isNaN(valor) || valor < 0 || valor > puntajeMaximo){
+      hayError = true;
+      c.style.outline = "2px solid var(--danger)";
+      return;
+    }
+    c.style.outline = "";
+    calificaciones[c.dataset.alumnoId] = valor;
+  });
+
+  if(hayError){
+    mostrarMensaje(`Revisa que las calificaciones estén entre 0 y ${puntajeMaximo}`);
+    return;
+  }
+
+  const registro = {
+    id:actividadEditandoId || uid(),
+    tipo,
+    periodo,
+    nombre,
+    fecha,
+    grupo,
+    puntajeMaximo,
+    calificaciones
+  };
+
+  if(actividadEditandoId){
+    actividades = actividades.map(act=>act.id===actividadEditandoId ? registro : act);
+  }else{
+    actividades.push(registro);
+  }
+
+  guardarStorage();
+  document.getElementById("nombreActividad").value = "";
+  document.getElementById("listaActividad").innerHTML = "";
+  cancelarEdicionActividad(false);
+  verHistorial();
+  mostrarMensaje(tipo==="examen" ? "Examen guardado" : "Actividad guardada");
+}
+
+function verHistorial(){
+  const cont = document.getElementById("historialActividades");
+  cont.innerHTML = "";
+
+  if(!actividades.length){
+    cont.appendChild(crearTexto("p", "Todavía no hay actividades registradas.", "muted"));
+    return;
+  }
+
+  actividades.slice().reverse().forEach(a=>{
+    const div = document.createElement("div");
+    div.style.border = "1px solid var(--border)";
+    div.style.padding = "10px";
+    div.style.marginBottom = "10px";
+    div.style.borderRadius = "8px";
+
+    const titulo = crearTexto("h3", a.nombre);
+    const etiqueta = crearTexto("span", (a.tipo || "actividad")==="examen" ? "Examen" : "Actividad", "pill");
+    titulo.appendChild(etiqueta);
+    div.appendChild(titulo);
+    div.appendChild(crearTexto("p", `Periodo: ${a.periodo || "Sin periodo"}`));
+    div.appendChild(crearTexto("p", `Fecha: ${a.fecha}`));
+    div.appendChild(crearTexto("p", `Grupo: ${a.grupo}`));
+    div.appendChild(crearTexto("p", `Puntaje máximo: ${a.puntajeMaximo || 1}`));
+
+    const btnEditar = document.createElement("button");
+    btnEditar.textContent = "Editar";
+    btnEditar.className = "secundario";
+    btnEditar.onclick = ()=>editarActividad(a.id);
+
+    const btnEliminar = document.createElement("button");
+    btnEliminar.textContent = "Eliminar";
+    btnEliminar.className = "peligro";
+    btnEliminar.onclick = ()=>eliminarActividad(a.id);
+
+    div.appendChild(btnEditar);
+    div.appendChild(btnEliminar);
+
+    cont.appendChild(div);
+  });
+}
+
+function editarActividad(id){
+  const act = actividades.find(a=>a.id===id);
+  if(!act) return;
+
+  actividadEditandoId = id;
+  document.getElementById("grupoActividad").value = act.grupo;
+  document.getElementById("periodoActividad").value = act.periodo || PERIODOS[0];
+  document.getElementById("tipoActividad").value = act.tipo || "actividad";
+  document.getElementById("nombreActividad").value = act.nombre || "";
+  document.getElementById("fechaActividad").value = act.fecha || "";
+  document.getElementById("puntajeMaximoActividad").value = act.puntajeMaximo || 10;
+  document.getElementById("btnCancelarEdicionActividad").classList.remove("hidden");
+  actualizarTextoActividad();
+  mostrarActividad(act.calificaciones || {});
+  mostrarMensaje("Editando registro");
+}
+
+function eliminarActividad(id){
+  const act = actividades.find(a=>a.id===id);
+  if(!act) return;
+  if(!confirm(`¿Eliminar ${act.nombre}?`)) return;
+
+  actividades = actividades.filter(a=>a.id!==id);
+  if(actividadEditandoId===id){
+    cancelarEdicionActividad(false);
+  }
+  guardarStorage();
+  verHistorial();
+  mostrarMensaje("Registro eliminado");
+}
+
+function cancelarEdicionActividad(mostrarAviso = true){
+  actividadEditandoId = null;
+  const btn = document.getElementById("btnCancelarEdicionActividad");
+  if(btn) btn.classList.add("hidden");
+  if(mostrarAviso){
+    document.getElementById("nombreActividad").value = "";
+    document.getElementById("listaActividad").innerHTML = "";
+    mostrarMensaje("Edición cancelada");
+  }
+}
+
+function actualizarTextoActividad(){
+  const tipo = document.getElementById("tipoActividad").value;
+  const ayuda = document.getElementById("ayudaActividad");
+  const instruccion = document.getElementById("instruccionActividad");
+  const labelPuntaje = document.getElementById("labelPuntajeMaximo");
+
+  labelPuntaje.textContent = tipo==="examen"
+    ? "Puntaje máximo del examen"
+    : "Puntaje máximo de la actividad";
+
+  instruccion.textContent = tipo==="examen"
+    ? "Primero escribe cuánto vale el examen. Después carga alumnos y captura cuánto sacó cada uno."
+    : "Primero escribe cuánto vale la actividad. Después carga alumnos y captura cuánto obtuvo cada uno.";
+
+  ayuda.textContent = tipo==="examen"
+    ? "Calificación obtenida por alumno. Los exámenes completos suman hasta 2 puntos de la calificación final."
+    : "Calificación obtenida por alumno. Las actividades completas suman hasta 2 puntos de la calificación final.";
+}
+
+function cargarConducta(){
+  const grupo = document.getElementById("grupoConducta").value;
+  const tabla = document.getElementById("tablaConducta");
+  tabla.innerHTML = "";
+
+  alumnos.filter(a=>a.grupo===grupo).forEach((a,index)=>{
+    const tr = document.createElement("tr");
+    tr.appendChild(crearTexto("td", a.nombre));
+
+    const tdCond = document.createElement("td");
+    const select = document.createElement("select");
+    select.id = `cond_${index}`;
+    ["Excelente","Buena","Regular","Mala"].forEach(op=>{
+      const opt = document.createElement("option");
+      opt.textContent = op;
+      select.appendChild(opt);
+    });
+    tdCond.appendChild(select);
+    tr.appendChild(tdCond);
+
+    const tdObs = document.createElement("td");
+    const obs = document.createElement("input");
+    obs.id = `obs_${index}`;
+    tdObs.appendChild(obs);
+    tr.appendChild(tdObs);
+
+    const tdBtn = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "Guardar";
+    btn.onclick = ()=>guardarConducta(a.id, select.id, obs.id);
+    tdBtn.appendChild(btn);
+    tr.appendChild(tdBtn);
+
+    tabla.appendChild(tr);
+  });
+}
+
+function guardarConducta(id, idCond, idObs){
+  const tipo = document.getElementById(idCond).value;
+  const obs = document.getElementById(idObs).value.trim();
+  const periodo = periodoSeleccionado("periodoConducta");
+
+  if(!conducta[id]) conducta[id] = [];
+  conducta[id].push({
+    fecha:new Date().toLocaleDateString("es-MX"),
+    periodo,
+    tipo,
+    obs
+  });
+
+  document.getElementById(idObs).value = "";
+  guardarStorage();
+  mostrarMensaje("Conducta guardada");
+}
+
+function contarAsistencia(id, periodo = ""){
+  const data = asistencias[id] || {};
+  const conteo = {presentes:0,faltas:0,retardos:0,justificados:0,participaciones:0,diasSinFalta:0};
+
+  Object.values(data).forEach(d=>{
+    if(!coincidePeriodo(d.periodo, periodo)) return;
+    if(d.estado==="P") conteo.presentes++;
+    if(d.estado==="F") conteo.faltas++;
+    if(d.estado==="R") conteo.retardos++;
+    if(d.estado==="J") conteo.justificados++;
+    if(d.estado && d.estado!=="F") conteo.diasSinFalta++;
+    if(d.estado!=="F" && d.participacion) conteo.participaciones++;
+  });
+
+  return conteo;
+}
+
+function resumenEvaluacion(id, periodo = ""){
+  const pesos = getPonderaciones();
+  const actividad = calcularBloqueEvaluacion(id, "actividad", pesos.actividades, periodo);
+  const examen = calcularBloqueEvaluacion(id, "examen", pesos.examenes, periodo);
+  const conductaPuntos = calcularConducta(id, periodo, pesos.conducta);
+  const participacionPuntos = calcularParticipacion(id, periodo, pesos.participacion);
+  const total = actividad.puntos + examen.puntos + conductaPuntos + participacionPuntos;
+
+  return {
+    actividad,
+    examen,
+    conducta:conductaPuntos,
+    participacion:participacionPuntos,
+    total,
+    base:pesos.total,
+    pesos
+  };
+}
+
+function calcularBloqueEvaluacion(id, tipo, valorBloque, periodo = ""){
+  const registros = actividades.filter(act=>
+    (act.tipo || "actividad")===tipo &&
+    coincidePeriodo(act.periodo, periodo)
+  );
+  let obtenido = 0;
+  let maximo = 0;
+
+  registros.forEach(act=>{
+    if(act.calificaciones){
+      const max = Number(act.puntajeMaximo) || 0;
+      const valor = Number(act.calificaciones[id] || 0);
+      obtenido += Math.max(0, Math.min(valor, max));
+      maximo += max;
+      return;
+    }
+
+    if(tipo==="actividad" && Array.isArray(act.cumplieron)){
+      maximo += 1;
+      if(act.cumplieron.includes(id)) obtenido += 1;
+    }
+  });
+
+  const porcentaje = maximo ? obtenido / maximo : 0;
+  return {
+    obtenido,
+    maximo,
+    puntos:porcentaje * valorBloque
+  };
+}
+
+function calcularConducta(id, periodo = "", valorBloque = 0.5){
+  const registros = (conducta[id] || []).filter(r=>coincidePeriodo(r.periodo, periodo));
+  if(!registros.length) return valorBloque;
+
+  const valores = {
+    "Excelente":1,
+    "Buena":0.8,
+    "Regular":0.5,
+    "Mala":0
+  };
+
+  const suma = registros.reduce((total, r)=>total + (valores[r.tipo] ?? 0.5), 0);
+  return (suma / registros.length) * valorBloque;
+}
+
+function calcularParticipacion(id, periodo = "", valorBloque = 0.5){
+  const c = contarAsistencia(id, periodo);
+  if(!c.diasSinFalta) return 0;
+  return (c.participaciones / c.diasSinFalta) * valorBloque;
+}
+
+function formatoNumero(valor){
+  return Number(valor || 0).toFixed(2);
+}
+
+function generarReporte(){
+  const id = document.getElementById("alumnoReporte").value;
+  const alumno = alumnoPorId(id);
+  if(!alumno){
+    mostrarMensaje("Selecciona un alumno");
+    return;
+  }
+
+  const periodo = periodoSeleccionado("periodoReporte");
+  const c = contarAsistencia(id, periodo);
+  const evalua = resumenEvaluacion(id, periodo);
+  const cond = (conducta[id] || []).filter(r=>coincidePeriodo(r.periodo, periodo));
+
+  document.getElementById("resultadoReporte").textContent =
+`Alumno: ${alumno.nombre}
+Grupo: ${alumno.grupo}
+Periodo: ${periodo || "Todos los periodos"}
+
+========== CALIFICACIÓN BASE ${formatoNumero(evalua.base)} ==========
+Actividades: ${formatoNumero(evalua.actividad.puntos)} / ${formatoNumero(evalua.pesos.actividades)}
+Exámenes: ${formatoNumero(evalua.examen.puntos)} / ${formatoNumero(evalua.pesos.examenes)}
+Conducta: ${formatoNumero(evalua.conducta)} / ${formatoNumero(evalua.pesos.conducta)}
+Participación: ${formatoNumero(evalua.participacion)} / ${formatoNumero(evalua.pesos.participacion)}
+TOTAL: ${formatoNumero(evalua.total)} / ${formatoNumero(evalua.base)}
+
+========== ASISTENCIA ==========
+Presentes: ${c.presentes}
+Faltas: ${c.faltas}
+Retardos: ${c.retardos}
+Justificados: ${c.justificados}
+Participaciones: ${c.participaciones}
+
+========== CONDUCTA ==========
+Registros: ${cond.length}`;
+}
+
+function campoCSV(valor){
+  return `"${String(valor ?? "").replace(/"/g, '""')}"`;
+}
+
+function exportarCSV(){
+  const periodo = periodoSeleccionado("periodoReporte");
+  const pesos = getPonderaciones();
+  let csv = `Alumno,Grupo,Periodo,Actividades ${pesos.actividades},Examenes ${pesos.examenes},Conducta ${pesos.conducta},Participacion ${pesos.participacion},Total ${pesos.total},Faltas,Retardos,Justificados,Participaciones\n`;
+
+  alumnos.forEach(a=>{
+    const c = contarAsistencia(a.id, periodo);
+    const evalua = resumenEvaluacion(a.id, periodo);
+    csv += [
+      a.nombre,
+      a.grupo,
+      periodo || "Todos",
+      formatoNumero(evalua.actividad.puntos),
+      formatoNumero(evalua.examen.puntos),
+      formatoNumero(evalua.conducta),
+      formatoNumero(evalua.participacion),
+      formatoNumero(evalua.total),
+      c.faltas,
+      c.retardos,
+      c.justificados,
+      c.participaciones
+    ].map(campoCSV).join(",") + "\n";
+  });
+
+  descargarArchivo("\uFEFF" + csv, "reporte.csv", "text/csv;charset=utf-8");
+}
+
+function generarResumenGrupal(){
+  const grupo = document.getElementById("grupoResumen").value;
+  const periodo = periodoSeleccionado("periodoResumen");
+  const cont = document.getElementById("tablaResumenGrupal");
+  cont.innerHTML = "";
+
+  const lista = alumnos.filter(a=>a.grupo===grupo);
+  if(!lista.length){
+    cont.appendChild(crearTexto("p", "No hay alumnos en este grupo.", "muted"));
+    return;
+  }
+
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr>
+      <th>#</th>
+      <th>Alumno</th>
+      <th>Actividades</th>
+      <th>Exámenes</th>
+      <th>Conducta</th>
+      <th>Participación</th>
+      <th>Total</th>
+      <th>Faltas</th>
+    </tr>
+  `;
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  lista.forEach((a,index)=>{
+    const evalua = resumenEvaluacion(a.id, periodo);
+    const asistencia = contarAsistencia(a.id, periodo);
+    const tr = document.createElement("tr");
+    [
+      index + 1,
+      a.nombre,
+      `${formatoNumero(evalua.actividad.puntos)} / ${formatoNumero(evalua.pesos.actividades)}`,
+      `${formatoNumero(evalua.examen.puntos)} / ${formatoNumero(evalua.pesos.examenes)}`,
+      `${formatoNumero(evalua.conducta)} / ${formatoNumero(evalua.pesos.conducta)}`,
+      `${formatoNumero(evalua.participacion)} / ${formatoNumero(evalua.pesos.participacion)}`,
+      `${formatoNumero(evalua.total)} / ${formatoNumero(evalua.base)}`,
+      asistencia.faltas
+    ].forEach(valor=>tr.appendChild(crearTexto("td", valor)));
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  cont.appendChild(table);
+}
+
+async function generarPDF(){
+  if(!window.jspdf){
+    mostrarMensaje("No se pudo cargar la librería PDF");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const id = document.getElementById("alumnoReporte").value;
+  const alumno = alumnoPorId(id);
+
+  if(!alumno){
+    mostrarMensaje("Selecciona un alumno");
+    return;
+  }
+
+  const periodo = periodoSeleccionado("periodoReporte");
+  const c = contarAsistencia(id, periodo);
+  const evalua = resumenEvaluacion(id, periodo);
+  const cond = (conducta[id] || []).filter(r=>coincidePeriodo(r.periodo, periodo));
+
+  if(configuracion.logo){
+    try{
+      doc.addImage(configuracion.logo, configuracion.logoTipo || "PNG", 15, 10, 25, 25);
+    }catch(error){
+      console.warn("No se pudo agregar el logo al PDF", error);
+    }
+  }
+
+  doc.setFontSize(18);
+  doc.text(configuracion.nombreEscuela || "Escuela", 50, 20);
+  doc.setFontSize(11);
+  doc.text(`CCT: ${configuracion.cct || ""}`, 50, 28);
+  doc.text(`Docente: ${configuracion.docente || ""}`, 50, 35);
+  doc.text(`Disciplina: ${configuracion.disciplina || ""}`, 50, 42);
+  doc.text(`Ciclo Escolar: ${configuracion.ciclo || ""}`, 50, 49);
+
+  doc.setFontSize(16);
+  doc.text("Reporte Escolar", 20, 70);
+
+  doc.setFontSize(12);
+  doc.text(`Alumno: ${alumno.nombre}`, 20, 90);
+  doc.text(`Grupo: ${alumno.grupo}`, 20, 100);
+  doc.text(`Periodo: ${periodo || "Todos los periodos"}`, 20, 110);
+  doc.text(`Calificación final: ${formatoNumero(evalua.total)} / ${formatoNumero(evalua.base)}`, 20, 125);
+  doc.text(`Actividades: ${formatoNumero(evalua.actividad.puntos)} / ${formatoNumero(evalua.pesos.actividades)}`, 20, 140);
+  doc.text(`Exámenes: ${formatoNumero(evalua.examen.puntos)} / ${formatoNumero(evalua.pesos.examenes)}`, 20, 150);
+  doc.text(`Conducta: ${formatoNumero(evalua.conducta)} / ${formatoNumero(evalua.pesos.conducta)}`, 20, 160);
+  doc.text(`Participación: ${formatoNumero(evalua.participacion)} / ${formatoNumero(evalua.pesos.participacion)}`, 20, 170);
+  doc.text(`Presentes: ${c.presentes}`, 20, 180);
+  doc.text(`Faltas: ${c.faltas}`, 20, 190);
+  doc.text(`Retardos: ${c.retardos}`, 20, 200);
+  doc.text(`Justificados: ${c.justificados}`, 20, 210);
+  doc.text(`Registros conducta: ${cond.length}`, 20, 220);
+
+  doc.save(`Reporte_${alumno.nombre.replace(/[\\/:*?"<>|]/g, "_")}.pdf`);
+}
+
+function mensajePadres(id){
+  const alumno = alumnoPorId(id);
+  if(!alumno) return;
+
+  const telefono = String(alumno.telefono || "").replace(/\D/g, "");
+  if(!telefono){
+    mostrarMensaje("Alumno sin teléfono");
+    return;
+  }
+
+  const numero = telefono.startsWith("52") ? telefono : "52" + telefono;
+  const faltas = contarAsistencia(id).faltas;
+  const mensaje = `Hola. Le informamos que el alumno ${alumno.nombre} acumula ${faltas} faltas. Favor de comunicarse con la escuela.`;
+
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
+}
+
+function guardarConfiguracion(){
+  configuracion.nombreEscuela = document.getElementById("nombreEscuela").value.trim();
+  configuracion.cct = document.getElementById("cctEscuela").value.trim();
+  configuracion.docente = document.getElementById("docenteNombre").value.trim();
+  configuracion.disciplina = document.getElementById("disciplinaNombre").value.trim();
+  configuracion.ciclo = document.getElementById("cicloEscolar").value.trim();
+  configuracion.ponderaciones = {
+    actividades:Number(document.getElementById("pesoActividades").value) || 0,
+    examenes:Number(document.getElementById("pesoExamenes").value) || 0,
+    conducta:Number(document.getElementById("pesoConducta").value) || 0,
+    participacion:Number(document.getElementById("pesoParticipacion").value) || 0
+  };
+  guardarStorage();
+  mostrarMensaje("Configuración guardada");
+}
+
+function guardarLogo(event){
+  const archivo = event.target.files[0];
+  if(!archivo) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    configuracion.logo = e.target.result;
+    configuracion.logoTipo = archivo.type.includes("jpeg") || archivo.type.includes("jpg") ? "JPEG" : "PNG";
+    guardarStorage();
+    document.getElementById("previewLogo").src = configuracion.logo;
+    mostrarMensaje("Logo guardado");
+  };
+  reader.readAsDataURL(archivo);
+}
+
+function cargarConfiguracion(){
+  document.getElementById("nombreEscuela").value = configuracion.nombreEscuela || "";
+  document.getElementById("cctEscuela").value = configuracion.cct || "";
+  document.getElementById("docenteNombre").value = configuracion.docente || "";
+  document.getElementById("disciplinaNombre").value = configuracion.disciplina || "";
+  document.getElementById("cicloEscolar").value = configuracion.ciclo || "";
+  const pesos = getPonderaciones();
+  document.getElementById("pesoActividades").value = pesos.actividades;
+  document.getElementById("pesoExamenes").value = pesos.examenes;
+  document.getElementById("pesoConducta").value = pesos.conducta;
+  document.getElementById("pesoParticipacion").value = pesos.participacion;
+  if(configuracion.logo){
+    document.getElementById("previewLogo").src = configuracion.logo;
+  }
+}
+
+function exportarRespaldo(){
+  const respaldo = {
+    version:3,
+    fecha:new Date().toISOString(),
+    alumnos,
+    asistencias,
+    actividades,
+    conducta,
+    configuracion
+  };
+
+  descargarArchivo(
+    JSON.stringify(respaldo, null, 2),
+    `Docente_respaldo_${new Date().toISOString().slice(0,10)}.json`,
+    "application/json"
+  );
+}
+
+function importarRespaldo(event){
+  const archivo = event.target.files[0];
+  if(!archivo) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!data.alumnos || !Array.isArray(data.alumnos)){
+        mostrarMensaje("El respaldo no parece válido");
+        return;
+      }
+
+      if(!confirm("¿Importar respaldo? Esto reemplazará los datos actuales.")) return;
+
+      alumnos = data.alumnos || [];
+      asistencias = data.asistencias || {};
+      actividades = data.actividades || [];
+      conducta = data.conducta || {};
+      configuracion = data.configuracion || {};
+      alumnosConId();
+      guardarStorage();
+      cargarConfiguracion();
+      cambiarTab("alumnos");
+      mostrarMensaje("Respaldo importado");
+    }catch(error){
+      mostrarMensaje("No se pudo leer el respaldo");
+    }
+  };
+  reader.readAsText(archivo);
+  event.target.value = "";
+}
+
+function descargarArchivo(contenido, nombre, tipo){
+  const blob = new Blob([contenido], {type:tipo});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = nombre;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function borrarTodo(){
+  if(!confirm("¿Borrar todos los datos de Docente en este navegador?")) return;
+  alumnos = [];
+  asistencias = {};
+  actividades = [];
+  conducta = {};
+  configuracion = {};
+  Object.values(KEYS).forEach(key=>localStorage.removeItem(key));
+  document.body.classList.remove("dark");
+  cargarConfiguracion();
+  cambiarTab("alumnos");
+  mostrarMensaje("Datos borrados");
+}
+
+window.onload = function(){
+  alumnosConId();
+  aplicarTema();
+  ["periodoAsistencia","periodoActividad","periodoConducta","periodoReporte","periodoResumen"].forEach(id=>{
+    llenarSelectPeriodos(id, false);
+  });
+  document.getElementById("fechaAsistencia").value = new Date().toISOString().split("T")[0];
+  document.getElementById("fechaActividad").value = new Date().toISOString().split("T")[0];
+  cargarConfiguracion();
+  actualizarTextoActividad();
+  actualizarFiltrosAlumnos();
+  mostrarAlumnos();
+  registrarServiceWorker();
+};
+
+function registrarServiceWorker(){
+  if(!("serviceWorker" in navigator)) return;
+  if(location.protocol === "file:") return;
+
+  navigator.serviceWorker.register("./sw.js").catch(error=>{
+    console.warn("No se pudo registrar el modo instalable", error);
+  });
+}
+</script>
+</body>
+</html>

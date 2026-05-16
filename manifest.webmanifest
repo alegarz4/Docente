@@ -1,7 +1,7 @@
 {
   "name": "Docente",
   "short_name": "Docente",
-  "description": "Aplicación docente de autoría privada para registro de alumnos, asistencia, actividades, exámenes, conducta, participación y reportes.",
+  "description": "Aplicación docente de autoría de Claudia Alejandra Garza Hernández para registro de alumnos, asistencia, actividades, exámenes, conducta, participación y reportes.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

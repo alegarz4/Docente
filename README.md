@@ -26,7 +26,7 @@ Los datos se guardan localmente en el navegador del dispositivo. Para mover info
 
 ## Derechos De Autor
 
-Esta aplicación es de autoría privada. Todos los derechos quedan reservados por su autora.
+Esta aplicación es de autoría de Claudia Alejandra Garza Hernández. Todos los derechos quedan reservados por su autora.
 
 No está permitida la reproducción, copia, distribución, publicación, venta, sublicencia, modificación, adaptación, ingeniería inversa ni uso comercial de esta aplicación o de su código sin autorización previa y por escrito de su autora.
 

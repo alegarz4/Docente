@@ -3,15 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#00838f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Docente">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Docente</title>
-
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -55,14 +47,6 @@ header{
   align-items:center;
   flex-wrap:wrap;
   gap:10px;
-}
-
-.copyrightBar{
-  background:rgba(0,0,0,.08);
-  color:var(--muted);
-  text-align:center;
-  padding:10px;
-  font-size:12px;
 }
 
 h2,h3{
@@ -405,7 +389,7 @@ pre{
       <div class="grid">
         <div>
           <label>Grupo</label>
-          <select id="grupoActividad"></select>
+          <select id="grupoActividad" onchange="verHistorial()"></select>
         </div>
         <div>
           <label>Periodo</label>
@@ -428,7 +412,7 @@ pre{
         </div>
         <div>
           <label id="labelPuntajeMaximo">Puntaje máximo de la actividad</label>
-          <input type="number" id="puntajeMaximoActividad" min="1" step="0.1" value="10">
+          <input type="number" id="puntajeMaximoActividad" min="1" step="1" value="10">
         </div>
       </div>
       <p id="instruccionActividad" class="muted">Primero escribe cuánto vale la actividad. Después carga alumnos y captura cuánto obtuvo cada uno.</p>
@@ -509,7 +493,8 @@ pre{
           <select id="periodoResumen"></select>
         </div>
       </div>
-      <button onclick="generarResumenGrupal()">Ver resumen</button>
+      <button onclick="generarResumenGrupal()">Ver resumen y promedios</button>
+      <div id="promediosGrupo" class="resumen"></div>
       <div id="tablaResumenGrupal"></div>
     </div>
   </div>
@@ -566,7 +551,7 @@ pre{
           <input type="number" id="pesoParticipacion" min="0" step="0.1" value="0.5">
         </div>
       </div>
-      <p class="muted">La suma actual se usa como base de calificación. Si dejas 2 + 2 + 0.5 + 0.5, la base será 5.</p>
+      <p class="muted">Todos los alumnos parten de 5. Estas ponderaciones reparten los otros 5 puntos del encuadre; la calificación final máxima es 10.</p>
       <button onclick="guardarConfiguracion()">Guardar ponderación</button>
     </div>
 
@@ -582,10 +567,6 @@ pre{
 </div>
 
 <div id="mensaje" class="mensaje hidden"></div>
-
-<footer class="copyrightBar">
-  Docente. Aplicación de autoría de Claudia Alejandra Garza Hernández. Prohibida su reproducción, distribución, venta o modificación sin autorización expresa de la autora.
-</footer>
 
 <script>
 const KEYS = {
@@ -1093,8 +1074,8 @@ function mostrarActividad(calificacionesActuales = {}){
   const cont = document.getElementById("listaActividad");
   cont.innerHTML = "";
 
-  if(!puntajeMaximo || puntajeMaximo <= 0){
-    mostrarMensaje("El puntaje máximo debe ser mayor a cero");
+  if(!puntajeMaximo || puntajeMaximo <= 0 || !Number.isInteger(puntajeMaximo)){
+    mostrarMensaje("El puntaje máximo debe ser un número entero mayor a cero");
     return;
   }
 
@@ -1113,9 +1094,9 @@ function mostrarActividad(calificacionesActuales = {}){
     calificacion.type = "number";
     calificacion.min = "0";
     calificacion.max = String(puntajeMaximo);
-    calificacion.step = "0.1";
+    calificacion.step = "1";
     calificacion.value = calificacionesActuales[a.id] !== undefined
-      ? String(calificacionesActuales[a.id])
+      ? String(Math.round(Number(calificacionesActuales[a.id]) || 0))
       : String(puntajeMaximo);
     calificacion.dataset.alumnoId = a.id;
     calificacion.className = "campoChico";
@@ -1149,8 +1130,8 @@ function guardarActividad(){
     mostrarMensaje("Selecciona un grupo");
     return;
   }
-  if(!puntajeMaximo || puntajeMaximo <= 0){
-    mostrarMensaje("El puntaje máximo debe ser mayor a cero");
+  if(!puntajeMaximo || puntajeMaximo <= 0 || !Number.isInteger(puntajeMaximo)){
+    mostrarMensaje("El puntaje máximo debe ser un número entero mayor a cero");
     return;
   }
   if(!campos.length){
@@ -1163,7 +1144,7 @@ function guardarActividad(){
 
   campos.forEach(c=>{
     const valor = Number(c.value);
-    if(Number.isNaN(valor) || valor < 0 || valor > puntajeMaximo){
+    if(Number.isNaN(valor) || !Number.isInteger(valor) || valor < 0 || valor > puntajeMaximo){
       hayError = true;
       c.style.outline = "2px solid var(--danger)";
       return;
@@ -1173,7 +1154,7 @@ function guardarActividad(){
   });
 
   if(hayError){
-    mostrarMensaje(`Revisa que las calificaciones estén entre 0 y ${puntajeMaximo}`);
+    mostrarMensaje(`Las calificaciones deben ser números enteros entre 0 y ${puntajeMaximo}`);
     return;
   }
 
@@ -1204,14 +1185,17 @@ function guardarActividad(){
 
 function verHistorial(){
   const cont = document.getElementById("historialActividades");
+  const grupo = document.getElementById("grupoActividad").value;
   cont.innerHTML = "";
 
-  if(!actividades.length){
-    cont.appendChild(crearTexto("p", "Todavía no hay actividades registradas.", "muted"));
+  const historialGrupo = actividades.filter(a=>a.grupo===grupo);
+
+  if(!historialGrupo.length){
+    cont.appendChild(crearTexto("p", "Todavía no hay actividades registradas para este grupo.", "muted"));
     return;
   }
 
-  actividades.slice().reverse().forEach(a=>{
+  historialGrupo.slice().reverse().forEach(a=>{
     const div = document.createElement("div");
     div.style.border = "1px solid var(--border)";
     div.style.padding = "10px";
@@ -1254,7 +1238,7 @@ function editarActividad(id){
   document.getElementById("tipoActividad").value = act.tipo || "actividad";
   document.getElementById("nombreActividad").value = act.nombre || "";
   document.getElementById("fechaActividad").value = act.fecha || "";
-  document.getElementById("puntajeMaximoActividad").value = act.puntajeMaximo || 10;
+  document.getElementById("puntajeMaximoActividad").value = Math.round(Number(act.puntajeMaximo) || 10);
   document.getElementById("btnCancelarEdicionActividad").classList.remove("hidden");
   actualizarTextoActividad();
   mostrarActividad(act.calificaciones || {});
@@ -1383,22 +1367,27 @@ function resumenEvaluacion(id, periodo = ""){
   const examen = calcularBloqueEvaluacion(id, "examen", pesos.examenes, periodo);
   const conductaPuntos = calcularConducta(id, periodo, pesos.conducta);
   const participacionPuntos = calcularParticipacion(id, periodo, pesos.participacion);
-  const total = actividad.puntos + examen.puntos + conductaPuntos + participacionPuntos;
+  const puntosEncuadre = actividad.puntos + examen.puntos + conductaPuntos + participacionPuntos;
+  const encuadre = pesos.total > 0 ? (puntosEncuadre / pesos.total) * 5 : 0;
+  const total = 5 + encuadre;
 
   return {
     actividad,
     examen,
     conducta:conductaPuntos,
     participacion:participacionPuntos,
+    encuadre,
     total,
-    base:pesos.total,
+    base:10,
     pesos
   };
 }
 
 function calcularBloqueEvaluacion(id, tipo, valorBloque, periodo = ""){
+  const alumno = alumnoPorId(id);
   const registros = actividades.filter(act=>
     (act.tipo || "actividad")===tipo &&
+    (!alumno || act.grupo===alumno.grupo) &&
     coincidePeriodo(act.periodo, periodo)
   );
   let obtenido = 0;
@@ -1429,7 +1418,7 @@ function calcularBloqueEvaluacion(id, tipo, valorBloque, periodo = ""){
 
 function calcularConducta(id, periodo = "", valorBloque = 0.5){
   const registros = (conducta[id] || []).filter(r=>coincidePeriodo(r.periodo, periodo));
-  if(!registros.length) return valorBloque;
+  if(!registros.length) return 0;
 
   const valores = {
     "Excelente":1,
@@ -1452,6 +1441,50 @@ function formatoNumero(valor){
   return Number(valor || 0).toFixed(2);
 }
 
+function formatoPromedioFinal(valor){
+  return String(Math.round(Number(valor) || 0));
+}
+
+function calcularPromediosGrupo(lista, periodo = ""){
+  const acumulado = {
+    actividad:0,
+    examen:0,
+    conducta:0,
+    participacion:0,
+    total:0,
+    faltas:0
+  };
+
+  lista.forEach(a=>{
+    const evalua = resumenEvaluacion(a.id, periodo);
+    const asistencia = contarAsistencia(a.id, periodo);
+    acumulado.actividad += evalua.actividad.puntos;
+    acumulado.examen += evalua.examen.puntos;
+    acumulado.conducta += evalua.conducta;
+    acumulado.participacion += evalua.participacion;
+    acumulado.total += evalua.total;
+    acumulado.faltas += asistencia.faltas;
+  });
+
+  const cantidad = lista.length || 1;
+  Object.keys(acumulado).forEach(clave=>{
+    acumulado[clave] = acumulado[clave] / cantidad;
+  });
+
+  return acumulado;
+}
+
+function mostrarPromediosGrupo(promedios){
+  const cont = document.getElementById("promediosGrupo");
+  cont.innerHTML = "";
+
+  const div = document.createElement("div");
+  div.className = "dato";
+  div.appendChild(crearTexto("strong", formatoPromedioFinal(promedios.total)));
+  div.appendChild(crearTexto("span", "Promedio final del grupo"));
+  cont.appendChild(div);
+}
+
 function generarReporte(){
   const id = document.getElementById("alumnoReporte").value;
   const alumno = alumnoPorId(id);
@@ -1470,11 +1503,13 @@ function generarReporte(){
 Grupo: ${alumno.grupo}
 Periodo: ${periodo || "Todos los periodos"}
 
-========== CALIFICACIÓN BASE ${formatoNumero(evalua.base)} ==========
+========== CALIFICACIÓN FINAL ==========
+Base inicial: 5
 Actividades: ${formatoNumero(evalua.actividad.puntos)} / ${formatoNumero(evalua.pesos.actividades)}
 Exámenes: ${formatoNumero(evalua.examen.puntos)} / ${formatoNumero(evalua.pesos.examenes)}
 Conducta: ${formatoNumero(evalua.conducta)} / ${formatoNumero(evalua.pesos.conducta)}
 Participación: ${formatoNumero(evalua.participacion)} / ${formatoNumero(evalua.pesos.participacion)}
+Encuadre obtenido: ${formatoNumero(evalua.encuadre)} / 5
 TOTAL: ${formatoNumero(evalua.total)} / ${formatoNumero(evalua.base)}
 
 ========== ASISTENCIA ==========
@@ -1495,7 +1530,7 @@ function campoCSV(valor){
 function exportarCSV(){
   const periodo = periodoSeleccionado("periodoReporte");
   const pesos = getPonderaciones();
-  let csv = `Alumno,Grupo,Periodo,Actividades ${pesos.actividades},Examenes ${pesos.examenes},Conducta ${pesos.conducta},Participacion ${pesos.participacion},Total ${pesos.total},Faltas,Retardos,Justificados,Participaciones\n`;
+  let csv = `Alumno,Grupo,Periodo,Actividades ${pesos.actividades},Examenes ${pesos.examenes},Conducta ${pesos.conducta},Participacion ${pesos.participacion},Calificacion final 10,Faltas,Retardos,Justificados,Participaciones\n`;
 
   alumnos.forEach(a=>{
     const c = contarAsistencia(a.id, periodo);
@@ -1523,7 +1558,9 @@ function generarResumenGrupal(){
   const grupo = document.getElementById("grupoResumen").value;
   const periodo = periodoSeleccionado("periodoResumen");
   const cont = document.getElementById("tablaResumenGrupal");
+  const promediosCont = document.getElementById("promediosGrupo");
   cont.innerHTML = "";
+  promediosCont.innerHTML = "";
 
   const lista = alumnos.filter(a=>a.grupo===grupo);
   if(!lista.length){
@@ -1531,18 +1568,16 @@ function generarResumenGrupal(){
     return;
   }
 
+  const promedios = calcularPromediosGrupo(lista, periodo);
+  mostrarPromediosGrupo(promedios);
+
   const table = document.createElement("table");
   const thead = document.createElement("thead");
   thead.innerHTML = `
     <tr>
       <th>#</th>
       <th>Alumno</th>
-      <th>Actividades</th>
-      <th>Exámenes</th>
-      <th>Conducta</th>
-      <th>Participación</th>
-      <th>Total</th>
-      <th>Faltas</th>
+      <th>Promedio final</th>
     </tr>
   `;
   table.appendChild(thead);
@@ -1550,22 +1585,27 @@ function generarResumenGrupal(){
   const tbody = document.createElement("tbody");
   lista.forEach((a,index)=>{
     const evalua = resumenEvaluacion(a.id, periodo);
-    const asistencia = contarAsistencia(a.id, periodo);
     const tr = document.createElement("tr");
     [
       index + 1,
       a.nombre,
-      `${formatoNumero(evalua.actividad.puntos)} / ${formatoNumero(evalua.pesos.actividades)}`,
-      `${formatoNumero(evalua.examen.puntos)} / ${formatoNumero(evalua.pesos.examenes)}`,
-      `${formatoNumero(evalua.conducta)} / ${formatoNumero(evalua.pesos.conducta)}`,
-      `${formatoNumero(evalua.participacion)} / ${formatoNumero(evalua.pesos.participacion)}`,
-      `${formatoNumero(evalua.total)} / ${formatoNumero(evalua.base)}`,
-      asistencia.faltas
+      formatoPromedioFinal(evalua.total)
     ].forEach(valor=>tr.appendChild(crearTexto("td", valor)));
     tbody.appendChild(tr);
   });
 
   table.appendChild(tbody);
+
+  const tfoot = document.createElement("tfoot");
+  const filaPromedio = document.createElement("tr");
+  [
+    "",
+    "PROMEDIO DEL GRUPO",
+    formatoPromedioFinal(promedios.total)
+  ].forEach(valor=>filaPromedio.appendChild(crearTexto("th", valor)));
+  tfoot.appendChild(filaPromedio);
+  table.appendChild(tfoot);
+
   cont.appendChild(table);
 }
 
@@ -1777,17 +1817,7 @@ window.onload = function(){
   actualizarTextoActividad();
   actualizarFiltrosAlumnos();
   mostrarAlumnos();
-  registrarServiceWorker();
 };
-
-function registrarServiceWorker(){
-  if(!("serviceWorker" in navigator)) return;
-  if(location.protocol === "file:") return;
-
-  navigator.serviceWorker.register("./sw.js").catch(error=>{
-    console.warn("No se pudo registrar el modo instalable", error);
-  });
-}
 </script>
 </body>
 </html>

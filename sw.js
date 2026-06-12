@@ -1,9 +1,10 @@
-const CACHE_NAME = "docente-pwa-v2";
+const CACHE_NAME = "docente-pwa-v3";
 const APP_FILES = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon.svg",
+  "./report-search.js"
 ];
 
 self.addEventListener("install", event => {
@@ -30,6 +31,22 @@ self.addEventListener("message", event => {
   }
 });
 
+async function agregarMejorasAlHtml(response){
+  const tipo = response.headers.get("content-type") || "";
+  if(!tipo.includes("text/html")) return response;
+
+  const html = await response.text();
+  const actualizado = html.includes("report-search.js")
+    ? html
+    : html.replace("</body>", '<script src="./report-search.js"></script>\n</body>');
+
+  return new Response(actualizado, {
+    status:response.status,
+    statusText:response.statusText,
+    headers:response.headers
+  });
+}
+
 self.addEventListener("fetch", event => {
   if(event.request.method !== "GET") return;
 
@@ -39,6 +56,7 @@ self.addEventListener("fetch", event => {
   if(esArchivoDeLaApp){
     event.respondWith(
       fetch(event.request, {cache:"no-store"})
+        .then(agregarMejorasAlHtml)
         .then(response => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));

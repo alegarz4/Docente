@@ -1,74 +1,83 @@
-const PROMEDIOS_PREVIOS_KEY = "promediosPreviosPRO";
-const USAR_PROMEDIOS_PREVIOS_KEY = "usarPromediosPreviosPRO";
-let promediosPreviosApp = JSON.parse(localStorage.getItem(PROMEDIOS_PREVIOS_KEY) || "{}");
+const PROMEDIOS_OFICIALES_KEY = "promediosPreviosPRO";
+let promediosOficiales = JSON.parse(localStorage.getItem(PROMEDIOS_OFICIALES_KEY) || "{}");
+const PERIODOS_PROMEDIOS = ["Periodo 1","Periodo 2","Periodo 3"];
 
-function guardarPromediosPreviosApp(){
-  localStorage.setItem(PROMEDIOS_PREVIOS_KEY, JSON.stringify(promediosPreviosApp));
+function promedioOficial(id, periodo){
+  const datos = promediosOficiales[id] || {};
+  const anterior = periodo === "Periodo 1" ? datos.periodo1 : periodo === "Periodo 2" ? datos.periodo2 : undefined;
+  const valor = datos[periodo] ?? anterior;
+  return valor === undefined ? null : Number(valor);
 }
 
-function instalarPromediosPrevios(){
+function instalarPestanaPromedios(){
+  if(document.getElementById("promedios")) return;
+
+  const botonReportes = document.querySelector('button[onclick="cambiarTab(\'reportes\')"]');
+  const boton = document.createElement("button");
+  boton.textContent = "Promedios";
+  boton.onclick = ()=>cambiarTab("promedios");
+  botonReportes?.parentNode.insertBefore(boton, botonReportes);
+
   const reportes = document.getElementById("reportes");
-  const configuracion = document.getElementById("configuracion");
-  if(!reportes || !configuracion || document.getElementById("grupoPromediosPrevios")) return;
+  const seccion = document.createElement("div");
+  seccion.id = "promedios";
+  seccion.className = "hidden";
+  seccion.innerHTML = `
+    <div class="card">
+      <h3>Promedios por periodo</h3>
+      <p class="muted">El promedio calculado se obtiene de las actividades. Puedes modificar el promedio oficial para considerar trabajos extra; ese valor se usará en reportes y en el promedio final.</p>
+      <div class="grid">
+        <div><label>Grupo</label><select id="grupoPromedios"></select></div>
+        <div><label>Periodo</label><select id="periodoPromedios"></select></div>
+      </div>
+      <button onclick="cargarPromediosApp()">Cargar alumnos</button>
+      <div id="tablaPromedios"></div>
+      <button onclick="guardarPromediosApp()">Guardar modificaciones</button>
+    </div>`;
+  reportes.parentNode.insertBefore(seccion, reportes);
 
-  const tarjeta = document.createElement("div");
-  tarjeta.className = "card";
-  tarjeta.innerHTML = `
-    <h3>Promedios de periodos anteriores</h3>
-    <p class="muted">Captura el promedio final de los periodos 1 y 2.</p>
-    <label>Grupo</label>
-    <select id="grupoPromediosPrevios"></select>
-    <button onclick="cargarPromediosPreviosApp()">Cargar alumnos</button>
-    <div id="tablaPromediosPrevios"></div>
-    <button onclick="guardarPromediosPreviosCapturados()">Guardar promedios</button>
-  `;
-  reportes.appendChild(tarjeta);
+  const grupos = document.getElementById("grupoPromedios");
+  gruposUnicos().forEach(grupo=>grupos.add(new Option(grupo, grupo)));
+  grupos.addEventListener("change", cargarPromediosApp);
 
-  const tarjetasConfig = configuracion.querySelectorAll(".card");
-  const ponderacion = tarjetasConfig[1];
-  const opcion = document.createElement("label");
-  opcion.innerHTML = '<input type="checkbox" id="usarPromediosPreviosApp" style="width:auto"> Tomar en cuenta Periodo 1 y Periodo 2 al calcular el promedio final';
-  ponderacion.insertBefore(opcion, ponderacion.lastElementChild);
-  const check = document.getElementById("usarPromediosPreviosApp");
-  check.checked = localStorage.getItem(USAR_PROMEDIOS_PREVIOS_KEY) === "1";
-  check.addEventListener("change", ()=>localStorage.setItem(USAR_PROMEDIOS_PREVIOS_KEY, check.checked ? "1" : "0"));
-
-  const selector = document.getElementById("grupoPromediosPrevios");
-  gruposUnicos().forEach(grupo=>selector.add(new Option(grupo, grupo)));
-  selector.addEventListener("change", cargarPromediosPreviosApp);
-  cargarPromediosPreviosApp();
+  const periodos = document.getElementById("periodoPromedios");
+  PERIODOS_PROMEDIOS.forEach(periodo=>periodos.add(new Option(periodo, periodo)));
+  periodos.addEventListener("change", cargarPromediosApp);
+  cargarPromediosApp();
 }
 
-window.cargarPromediosPreviosApp = function(){
-  const grupo = document.getElementById("grupoPromediosPrevios")?.value;
-  const cont = document.getElementById("tablaPromediosPrevios");
+window.cargarPromediosApp = function(){
+  const grupo = document.getElementById("grupoPromedios")?.value;
+  const periodo = document.getElementById("periodoPromedios")?.value;
+  const cont = document.getElementById("tablaPromedios");
   if(!cont) return;
-  const lista = alumnos.filter(a=>a.grupo===grupo);
-  cont.innerHTML = '<table><thead><tr><th>Alumno</th><th>Periodo 1</th><th>Periodo 2</th></tr></thead><tbody></tbody></table>';
+
+  cont.innerHTML = '<table><thead><tr><th>Alumno</th><th>Promedio calculado</th><th>Promedio oficial editable</th></tr></thead><tbody></tbody></table>';
   const tbody = cont.querySelector("tbody");
-  lista.forEach(a=>{
+  alumnos.filter(a=>a.grupo===grupo).forEach(a=>{
+    const calculado = resumenEvaluacionOriginal(a.id, periodo).total;
+    const oficial = promedioOficial(a.id, periodo);
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${a.nombre}</td>`;
-    ["periodo1","periodo2"].forEach(periodo=>{
-      const td = document.createElement("td");
-      const input = document.createElement("input");
-      input.type = "number";
-      input.min = "5";
-      input.max = "10";
-      input.step = "1";
-      input.className = "campoChico promedioPrevioApp";
-      input.dataset.alumnoId = a.id;
-      input.dataset.periodo = periodo;
-      input.value = promediosPreviosApp[a.id]?.[periodo] ?? "";
-      td.appendChild(input);
-      tr.appendChild(td);
-    });
+    tr.innerHTML = `<td>${a.nombre}</td><td>${Math.round(calculado)}</td>`;
+    const td = document.createElement("td");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "5";
+    input.max = "10";
+    input.step = "1";
+    input.className = "campoChico promedioOficialApp";
+    input.dataset.alumnoId = a.id;
+    input.dataset.periodo = periodo;
+    input.placeholder = String(Math.round(calculado));
+    input.value = oficial === null ? "" : String(oficial);
+    td.appendChild(input);
+    tr.appendChild(td);
     tbody.appendChild(tr);
   });
 };
 
-window.guardarPromediosPreviosCapturados = function(){
-  const campos = document.querySelectorAll(".promedioPrevioApp");
+window.guardarPromediosApp = function(){
+  const campos = document.querySelectorAll(".promedioOficialApp");
   let error = false;
   campos.forEach(campo=>{
     if(!campo.value) return;
@@ -82,24 +91,40 @@ window.guardarPromediosPreviosCapturados = function(){
   campos.forEach(campo=>{
     const id = campo.dataset.alumnoId;
     const periodo = campo.dataset.periodo;
-    if(!promediosPreviosApp[id]) promediosPreviosApp[id] = {};
-    if(campo.value) promediosPreviosApp[id][periodo] = Number(campo.value);
-    else delete promediosPreviosApp[id][periodo];
+    if(!promediosOficiales[id]) promediosOficiales[id] = {};
+    if(campo.value) promediosOficiales[id][periodo] = Number(campo.value);
+    else delete promediosOficiales[id][periodo];
+    if(periodo === "Periodo 1") delete promediosOficiales[id].periodo1;
+    if(periodo === "Periodo 2") delete promediosOficiales[id].periodo2;
   });
-  guardarPromediosPreviosApp();
-  mostrarMensaje("Promedios anteriores guardados");
+  localStorage.setItem(PROMEDIOS_OFICIALES_KEY, JSON.stringify(promediosOficiales));
+  cargarPromediosApp();
+  mostrarMensaje("Promedios oficiales guardados");
 };
 
 const resumenEvaluacionOriginal = window.resumenEvaluacion;
 window.resumenEvaluacion = function(id, periodo = ""){
-  if(periodo || localStorage.getItem(USAR_PROMEDIOS_PREVIOS_KEY) !== "1"){
-    return resumenEvaluacionOriginal(id, periodo);
+  if(periodo){
+    const calculado = resumenEvaluacionOriginal(id, periodo);
+    const oficial = promedioOficial(id, periodo);
+    return {...calculado, total:oficial === null ? calculado.total : oficial};
   }
-  const actual = resumenEvaluacionOriginal(id, "Periodo 3");
-  const previos = promediosPreviosApp[id] || {};
-  const valores = [previos.periodo1, previos.periodo2, actual.total].map(Number).filter(Number.isFinite);
-  return {...actual, total:valores.reduce((suma, valor)=>suma + valor, 0) / valores.length};
+  const evaluaciones = PERIODOS_PROMEDIOS.map(p=>window.resumenEvaluacion(id, p));
+  const actual = evaluaciones[2];
+  return {...actual, total:evaluaciones.reduce((suma, e)=>suma + e.total, 0) / evaluaciones.length};
 };
 
-if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", instalarPromediosPrevios);
-else instalarPromediosPrevios();
+const cambiarTabOriginal = window.cambiarTab;
+window.cambiarTab = function(tab){
+  if(tab === "promedios"){
+    ["alumnos","asistencia","actividades","conducta","reportes","configuracion","promedios"].forEach(id=>document.getElementById(id)?.classList.add("hidden"));
+    document.getElementById("promedios")?.classList.remove("hidden");
+    cargarPromediosApp();
+    return;
+  }
+  document.getElementById("promedios")?.classList.add("hidden");
+  cambiarTabOriginal(tab);
+};
+
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", instalarPestanaPromedios);
+else instalarPestanaPromedios();

@@ -563,6 +563,13 @@ pre{
       <input type="file" accept="application/json" onchange="importarRespaldo(event)">
       <button class="peligro" onclick="borrarTodo()">Borrar todos los datos</button>
     </div>
+
+    <div class="card">
+      <h3>Actualización de la aplicación</h3>
+      <p class="muted">Cuando publiques una versión nueva en GitHub, usa este botón para cargarla sin desinstalar la aplicación ni borrar tus datos.</p>
+      <button onclick="actualizarAplicacion()">Buscar actualización</button>
+      <p id="estadoActualizacion" class="muted"></p>
+    </div>
   </div>
 </div>
 
@@ -1789,6 +1796,40 @@ function descargarArchivo(contenido, nombre, tipo){
   link.download = nombre;
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+async function actualizarAplicacion(){
+  const estado = document.getElementById("estadoActualizacion");
+
+  if(!navigator.onLine){
+    estado.textContent = "Necesitas conexión a internet para buscar actualizaciones.";
+    mostrarMensaje("Sin conexión a internet");
+    return;
+  }
+
+  estado.textContent = "Buscando la versión más reciente...";
+
+  try{
+    if("serviceWorker" in navigator){
+      const registros = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registros.map(async registro=>{
+        await registro.update();
+        if(registro.waiting){
+          registro.waiting.postMessage({tipo:"ACTIVAR_ACTUALIZACION"});
+        }
+      }));
+    }
+
+    const urlBase = location.href.split("?")[0].split("#")[0];
+    const respuesta = await fetch(`${urlBase}?actualizacion=${Date.now()}`, {cache:"no-store"});
+    if(!respuesta.ok) throw new Error("No se pudo descargar la actualización");
+
+    estado.textContent = "Actualización encontrada. Recargando...";
+    location.replace(`${urlBase}?actualizacion=${Date.now()}`);
+  }catch(error){
+    estado.textContent = "No fue posible actualizar. Revisa tu conexión e inténtalo nuevamente.";
+    mostrarMensaje("No se pudo buscar la actualización");
+  }
 }
 
 function borrarTodo(){
